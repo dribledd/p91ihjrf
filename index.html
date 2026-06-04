@@ -487,8 +487,24 @@ document.getElementById('addNew').onclick=resetAddForm;
 ['addFront','addBack','addMemo'].forEach(id=>{
   const el=document.getElementById(id);
   el.addEventListener('focus',()=>lastRt=el);
-  el.addEventListener('keydown',e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') saveCard(); });
+  el.addEventListener('paste',e=>{                       // 붙여넣기는 서식 없이 순수 텍스트 → 기본 폰트 유지
+    e.preventDefault();
+    const text=((e.clipboardData||window.clipboardData).getData('text/plain'))||'';
+    document.execCommand('insertText',false,text);
+  });
+  el.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&!e.shiftKey&&e.key==='Enter'){ saveCard(); return; }
+    if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.code==='KeyB'){ e.preventDefault(); resetToDefaultFont(el); }  // ⌘/Ctrl+Shift+B = 기본값으로
+  });
 });
+function resetToDefaultFont(field){
+  const sel=window.getSelection(); if(!sel) return;
+  if(sel.rangeCount&&!sel.isCollapsed){
+    const r=sel.getRangeAt(0); let a=r.commonAncestorContainer; a=a.nodeType===1?a:a.parentElement;
+    if(a&&a.closest&&a.closest('.rt')){ document.execCommand('insertText',false,sel.toString()); return; }
+  }
+  if(field){ field.focus(); document.execCommand('selectAll',false,null); document.execCommand('insertText',false,window.getSelection().toString()); }  // 선택 없으면 칸 전체 초기화
+}
 let savedRange=null;
 document.addEventListener('selectionchange',()=>{
   const sel=window.getSelection(); if(!sel.rangeCount) return;
