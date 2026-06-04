@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>복습 — 나만의 간격 반복</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Gowun+Dodum&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f3ede0;--paper-2:#ece4d3;--ink:#2a241c;--ink-soft:#6b6052;
+    --line:#d8cdb8;--clay:#c2562b;--moss:#5c6b4a;--sky:#3f6f7a;--shadow:rgba(58,48,32,.18);
+    --red:#b34141;--blue:#3a5fa8;--green:#4a7a45;--amber:#a67a2a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Gowun Dodum',sans-serif;background:var(--paper);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(194,86,43,.05), transparent 40%),
+      radial-gradient(circle at 82% 78%, rgba(63,111,122,.06), transparent 42%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+    color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 16px 90px;
+  }
+  .wrap{width:100%;max-width:640px}
+  header{display:flex;align-items:flex-end;justify-content:space-between;padding:32px 4px 16px;border-bottom:1.5px solid var(--line)}
+  .brand h1{font-family:'Fraunces',serif;font-weight:600;font-size:38px;letter-spacing:-1px;line-height:.95}
+  .brand h1 em{font-style:italic;color:var(--clay)}
+  .brand .tag{font-family:'Space Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:1px;text-transform:uppercase}
+  .due-pill{text-align:right}
+  .due-pill .num{font-family:'Fraunces',serif;font-size:34px;font-weight:600;color:var(--clay);line-height:1}
+  .due-pill .lbl{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--ink-soft);text-transform:uppercase}
+  nav{display:flex;gap:6px;margin:14px 0 24px;flex-wrap:wrap}
+  nav button{font-family:'Space Mono',monospace;font-size:12px;border:1.5px solid var(--line);background:transparent;color:var(--ink-soft);padding:8px 13px;border-radius:30px;cursor:pointer;transition:.18s}
+  nav button:hover{border-color:var(--ink-soft);color:var(--ink)}
+  nav button.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .view{display:none;animation:rise .4s ease}.view.show{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .panel{background:var(--paper-2);border:1.5px solid var(--line);border-radius:14px;padding:22px}
+  label.fld{display:block;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink-soft);margin:0 0 7px 2px}
+  textarea,input[type=text],select{width:100%;font-family:'Gowun Dodum',sans-serif;font-size:16px;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:9px;padding:12px 14px;resize:vertical;transition:.15s}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--clay)}
+  textarea{min-height:70px;line-height:1.5}
+  .row{margin-bottom:16px}
+  .row2{display:flex;gap:12px}.row2>div{flex:1}
+  .check{display:flex;align-items:center;gap:9px;cursor:pointer;font-size:15px;color:var(--ink)}
+  .check input{width:18px;height:18px;accent-color:var(--clay);cursor:pointer}
+  .btn{font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.5px;border:none;border-radius:9px;padding:12px 20px;cursor:pointer;transition:.16s;font-weight:700}
+  .btn-primary{background:var(--clay);color:#fff;box-shadow:0 4px 0 #8f3c1d}
+  .btn-primary:active{transform:translateY(3px);box-shadow:none}
+  .btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink-soft)}
+  .btn-ghost:hover{border-color:var(--ink-soft);color:var(--ink)}
+
+  #reviewArea{min-height:340px;display:flex;flex-direction:column}
+  .deckchoice{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .deckchoice .chip{font-family:'Space Mono',monospace;font-size:12px;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;background:var(--paper-2);transition:.15s;display:flex;gap:8px;align-items:center}
+  .deckchoice .chip:hover{border-color:var(--clay)}
+  .deckchoice .chip b{color:var(--clay)}
+  .deckchoice .chip .ty{font-size:9px;opacity:.6}
+
+  .flashcard{flex:1;background:#fbf7ee;border:1.5px solid var(--line);border-radius:16px;box-shadow:0 10px 28px var(--shadow);padding:30px 26px;display:flex;flex-direction:column;justify-content:center;position:relative;min-height:230px}
+  .flashcard .meta{position:absolute;top:13px;left:18px;font-family:'Space Mono',monospace;font-size:10px;color:var(--ink-soft);letter-spacing:1px;text-transform:uppercase}
+  .flashcard .dirlbl{font-family:'Space Mono',monospace;font-size:11px;color:var(--clay);letter-spacing:1px;margin-bottom:10px;text-align:center}
+  .ctext{font-family:'Gowun Dodum',sans-serif;font-size:26px;line-height:1.4;white-space:pre-wrap;text-align:center}
+  .rttoolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--paper-2);border:1.5px solid var(--line);border-radius:9px;padding:7px 9px;margin-bottom:10px}
+  .rtbtn{border:1.5px solid var(--line);background:var(--paper);border-radius:7px;min-width:32px;height:32px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;padding:0 8px;font-family:'Gowun Dodum',sans-serif;line-height:1}
+  .rtbtn:hover{border-color:var(--clay)}
+  .rtbtn.b{font-weight:700;font-family:'Fraunces',serif;font-size:16px}
+  .rtsw{width:24px;height:24px;border-radius:50%;border:2px solid var(--paper);box-shadow:0 0 0 1.5px var(--line);cursor:pointer;padding:0}
+  .rtsw:hover{box-shadow:0 0 0 1.5px var(--clay)}
+  .rtsep{width:1px;height:24px;background:var(--line);margin:0 3px}
+  .rtlabel{font-family:'Space Mono',monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.5px}
+  .rtselect{font-family:'Space Mono',monospace;font-size:13px;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:7px;height:32px;padding:0 6px;cursor:pointer;width:auto}
+  .rtselect:focus{outline:none;border-color:var(--clay)}
+  .rt{min-height:64px;font-family:'Gowun Dodum',sans-serif;font-size:16px;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:9px;padding:12px 14px;line-height:1.55;outline:none}
+  .rt:focus{border-color:var(--clay)}
+  .rt:empty:before{content:attr(data-ph);color:var(--ink-soft);opacity:.55}
+  .memo-toggle{margin-top:14px;font-family:'Space Mono',monospace;font-size:12px;background:var(--paper-2);border:1.5px solid var(--line);border-radius:7px;padding:7px 13px;cursor:pointer;color:var(--ink-soft);letter-spacing:.5px}
+  .memo-toggle:hover{border-color:var(--clay);color:var(--clay)}
+  .flashcard hr{border:none;border-top:1.5px dashed var(--line);margin:20px auto;width:60%}
+  .ans-label{font-family:'Space Mono',monospace;font-size:10px;color:var(--ink-soft);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  .myans{font-size:15px;color:var(--ink-soft);background:var(--paper-2);border-radius:8px;padding:9px 12px;margin-bottom:14px;white-space:pre-wrap;line-height:1.5}
+  .feedback{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:14px;line-height:1.55;background:var(--paper-2);border:1.5px solid var(--line)}
+  .feedback .v{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:5px}
+  .feedback.v-correct{border-color:var(--moss)}.feedback.v-correct .v{color:var(--moss)}
+  .feedback.v-vague{border-color:var(--amber)}.feedback.v-vague .v{color:var(--amber)}
+  .feedback.v-wrong{border-color:var(--red)}.feedback.v-wrong .v{color:var(--red)}
+  .memo-box{margin-top:14px;padding:10px 14px;border-left:3px solid var(--clay);background:var(--paper-2);border-radius:6px;font-size:14px;line-height:1.55;color:var(--ink-soft);white-space:pre-wrap}
+  .checking{text-align:center;color:var(--ink-soft);font-family:'Space Mono',monospace;font-size:13px;padding:18px}
+
+  .grade-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+  .grade{border:1.5px solid var(--line);border-radius:11px;padding:13px 6px;cursor:pointer;background:var(--paper-2);transition:.14s;text-align:center}
+  .grade:hover{transform:translateY(-2px)}
+  .grade .g-name{font-family:'Fraunces',serif;font-size:17px;font-weight:600}
+  .grade .g-int{font-family:'Space Mono',monospace;font-size:10px;color:var(--ink-soft);margin-top:3px;display:block}
+  .grade.wrong{border-color:var(--red)}.grade.wrong .g-name{color:var(--red)}
+  .grade.vague{border-color:var(--amber)}.grade.vague .g-name{color:var(--amber)}
+  .grade.correct{border-color:var(--moss)}.grade.correct .g-name{color:var(--moss)}
+  .grade.sel{box-shadow:0 0 0 2px var(--clay) inset;background:#fbf7ee}
+  .reveal-btn,.submit-btn{width:100%;margin-top:16px}
+  .skip{display:block;text-align:center;margin-top:12px;font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-soft);cursor:pointer;text-decoration:underline}
+
+  .empty{text-align:center;padding:56px 20px;color:var(--ink-soft)}
+  .empty .big{font-family:'Fraunces',serif;font-size:24px;color:var(--ink);margin-bottom:8px}
+  .empty .em{font-size:46px;margin-bottom:14px}
+
+  .item{display:flex;align-items:center;gap:12px;background:var(--paper-2);border:1.5px solid var(--line);border-radius:11px;padding:14px 16px;margin-bottom:10px}
+  .item .body{flex:1;min-width:0}
+  .item .t{font-family:'Fraunces',serif;font-size:17px;font-weight:500;line-height:1.2}
+  .item .s{font-size:13px;color:var(--ink-soft);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .item .badge{font-family:'Space Mono',monospace;font-size:10px;background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:var(--ink-soft);white-space:nowrap}
+  .item .badge.tr{color:var(--clay);border-color:var(--clay)}
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-soft);padding:6px;border-radius:7px;transition:.14s;line-height:1}
+  .icon-btn:hover{background:var(--paper);color:var(--clay)}
+  .section-title{font-family:'Fraunces',serif;font-size:21px;font-weight:600;margin:0 2px 16px}
+  .section-title span{color:var(--ink-soft);font-family:'Space Mono',monospace;font-size:12px;font-weight:400}
+
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);font-family:'Space Mono',monospace;font-size:13px;padding:11px 20px;border-radius:30px;opacity:0;pointer-events:none;transition:.3s;z-index:50;max-width:90%;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>복<em>습</em></h1><span class="tag">spaced&nbsp;repetition</span></div>
+    <div class="due-pill"><div class="num" id="dueCount">0</div><div class="lbl">오늘 복습</div></div>
+  </header>
+  <nav>
+    <button data-view="review" class="active">복습하기</button>
+    <button data-view="add">카드 추가</button>
+    <button data-view="browse">카드 목록</button>
+    <button data-view="decks">덱 관리</button>
+    <button data-view="backup">백업/복원</button>
+  </nav>
+
+  <section class="view show" id="view-review"><div id="reviewArea"></div></section>
+
+  <section class="view" id="view-add">
+    <div class="panel">
+      <div class="row"><label class="fld">덱 선택</label><select id="addDeck"></select></div>
+      <div class="rttoolbar" id="rtToolbar">
+        <button type="button" class="rtbtn b" data-cmd="bold" title="볼드">B</button>
+        <span class="rtsep"></span>
+        <button type="button" class="rtsw" data-color="#b34141" style="background:#b34141" title="빨강" aria-label="빨강"></button>
+        <button type="button" class="rtsw" data-color="#3a5fa8" style="background:#3a5fa8" title="파랑" aria-label="파랑"></button>
+        <button type="button" class="rtsw" data-color="#4a7a45" style="background:#4a7a45" title="초록" aria-label="초록"></button>
+        <button type="button" class="rtsw" data-color="#2a241c" style="background:#2a241c" title="기본색" aria-label="기본색"></button>
+        <span class="rtsep"></span>
+        <span class="rtlabel">크기</span>
+        <select id="rtSize" class="rtselect" title="글자 크기(pt)"></select>
+      </div>
+      <div class="row"><label class="fld" id="lblFront">앞면</label><div class="rt" id="addFront" contenteditable="true" data-ph="앞면 내용 — 드래그 후 위 아이콘으로 서식"></div></div>
+      <div class="row"><label class="fld" id="lblBack">뒷면</label><div class="rt" id="addBack" contenteditable="true" data-ph="뒷면 내용"></div></div>
+      <div class="row" id="memoRow"><label class="fld">메모 / 해설 (정답에서 펼침 버튼으로 표시)</label><div class="rt" id="addMemo" contenteditable="true" data-ph="해설·예문 등 (선택)"></div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" id="addSave">카드 저장 (⌘/Ctrl + Enter)</button>
+        <button class="btn btn-ghost" id="addNew" style="display:none">새 카드</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-browse">
+    <div class="section-title">카드 목록 <span id="browseCount"></span></div>
+    <div class="row"><select id="browseFilter"></select></div>
+    <div id="browseList"></div>
+  </section>
+
+  <section class="view" id="view-decks">
+    <div class="section-title" id="deckFormTitle">새 덱 만들기</div>
+    <div class="panel" style="margin-bottom:22px">
+      <div class="row"><label class="fld">덱 이름</label><input type="text" id="dfName" placeholder="예: 일본어 문장"></div>
+      <div class="row"><label class="fld">종류</label>
+        <select id="dfType"><option value="basic">기본 (뒤집어 보기)</option><option value="translation">번역 (타이핑 + 뜻 채점, 양방향)</option></select>
+      </div>
+      <div class="row" id="revRow" style="display:none"><label class="check"><input type="checkbox" id="dfReverse" checked>리버스 — 정방향·역방향 둘 다 출제 (카드 1, 카드 2)</label></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" id="dfSave">덱 저장</button>
+        <button class="btn btn-ghost" id="dfReset" style="display:none">새 덱</button>
+      </div>
+    </div>
+    <div id="deckList"></div>
+  </section>
+
+  <section class="view" id="view-backup">
+    <div class="section-title">백업 / 복원 <span id="bkStats"></span></div>
+    <div class="panel" style="margin-bottom:18px">
+      <label class="fld">내보내기</label>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px 2px;line-height:1.5">아래 내용을 복사하거나 파일로 저장해 보관하세요. 다른 기기의 '가져오기'에 붙여넣으면 복원돼요.</p>
+      <textarea id="exportText" readonly style="min-height:110px;font-family:'Space Mono',monospace;font-size:12px"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-primary" id="bkCopy">복사하기</button>
+        <button class="btn btn-ghost" id="bkDownload">파일로 저장</button>
+      </div>
+    </div>
+    <div class="panel">
+      <label class="fld">가져오기</label>
+      <p style="font-size:13px;color:var(--ink-soft);margin:0 0 12px 2px;line-height:1.5">백업 내용을 붙여넣거나 파일을 선택한 뒤 합치기/전체 교체를 누르세요.</p>
+      <textarea id="importText" placeholder="여기에 백업 내용을 붙여넣으세요"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary" id="bkMerge">합치기</button>
+        <button class="btn btn-ghost" id="bkReplace">전체 교체</button>
+        <label class="btn btn-ghost" style="cursor:pointer;display:inline-block">파일 선택<input type="file" id="bkFile" accept=".json,application/json" style="display:none"></label>
+      </div>
+      <div id="importMsg" style="font-size:13px;color:var(--clay);margin-top:12px;font-family:'Space Mono',monospace;line-height:1.5"></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORE_KEY='srs-data-v2';
+const DAY=24*60*60*1000;
+let state={decks:[],cards:[]};
+let session={deckId:null,queue:[],current:null,phase:'prompt',answer:'',verdict:null,feedback:''};
+
+const useClaude = typeof window!=='undefined' && window.storage && typeof window.storage.get==='function';
+
+/* ---------- storage ---------- */
+async function load(){
+  try{
+    if(useClaude){ const r=await window.storage.get(STORE_KEY); if(r&&r.value) state=JSON.parse(r.value); }
+    else{ const v=localStorage.getItem(STORE_KEY); if(v) state=JSON.parse(v); }
+  }catch(e){}
+  normalize();
+  if(!state.decks.length){ state.decks.push(newDeck('기본 덱')); await save(); }
+}
+async function save(){
+  try{
+    if(useClaude) await window.storage.set(STORE_KEY,JSON.stringify(state));
+    else localStorage.setItem(STORE_KEY,JSON.stringify(state));
+  }catch(e){ console.error(e); toast('저장에 실패했어요'); }
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function newDeck(name){ return {id:uid(),name,type:'basic',sideA:'앞면',sideB:'뒷면',reverse:false,showMemo:true,createdAt:Date.now()}; }
+function blankSched(){ return {S:null,D:null,due:Date.now(),last:null}; }
+
+function normalize(){
+  state.decks=(state.decks||[]).map(d=>{
+    const type=d.type==='translation'?'translation':'basic';
+    return {
+      id:d.id||uid(),name:d.name||'덱',type,
+      sideA:d.sideA||(type==='translation'?'일본어':'앞면'),
+      sideB:d.sideB||(type==='translation'?'한국어':'뒷면'),
+      reverse:d.reverse!==undefined?!!d.reverse:(type==='translation'),
+      showMemo:true,createdAt:d.createdAt||Date.now()
+    };
+  });
+  state.cards=(state.cards||[]).map(c=>{
+    let sched=c.sched;
+    if(!sched) sched={fwd:{ease:c.ease,interval:c.interval,reps:c.reps,due:c.due},rev:null};
+    sched.fwd=migrateSched(sched.fwd);
+    const deck=state.decks.find(d=>d.id===c.deckId);
+    if(deck&&deck.type==='translation'&&deck.reverse) sched.rev=migrateSched(sched.rev)||blankSched();
+    else if(sched.rev) sched.rev=migrateSched(sched.rev);
+    return {id:c.id||uid(),deckId:c.deckId,front:c.front||'',back:c.back||'',memo:c.memo||'',createdAt:c.createdAt||Date.now(),sched};
+  });
+}
+function migrateSched(s){
+  if(!s) return null;
+  if('S' in s) return {S:s.S??null,D:s.D??null,due:s.due??Date.now(),last:s.last??null};
+  const reps=s.reps??0, interval=s.interval??0, due=s.due??Date.now();
+  if(reps>0&&interval>0) return {S:Math.max(interval,0.5),D:initD(3),due,last:null};
+  return {S:null,D:null,due,last:null};
+}
+function deckById(id){ return state.decks.find(d=>d.id===id); }
+function deckName(id){ const d=deckById(id); return d?d.name:'삭제된 덱'; }
+
+/* ---------- scheduling: FSRS-6 (DSR model, verified vs official py-fsrs) ---------- */
+const FSRS_W=[0.212,1.2931,2.3065,8.2956,6.4133,0.8334,3.0194,0.001,1.8722,0.1666,0.796,1.4835,0.0614,0.2629,1.6483,0.6014,1.8729,0.5425,0.0912,0.0658,0.1542];
+const FSRS_DECAY=-FSRS_W[20];
+const FSRS_FACTOR=Math.pow(0.9,1/FSRS_DECAY)-1;
+const DESIRED_RETENTION=0.9;   // 목표 보유율 — 높일수록 더 자주 복습
+const S_MIN=0.001, MAX_IVL=36500;
+const GMAP={wrong:1,vague:2,correct:3};   // 틀림→Again, 애매→Hard, 정답→Good
+const _cS=s=>Math.max(s,S_MIN), _cD=d=>Math.min(Math.max(d,1),10);
+function initS(g){ return _cS(FSRS_W[g-1]); }
+function _initDraw(g){ return FSRS_W[4]-Math.exp(FSRS_W[5]*(g-1))+1; }
+function initD(g){ return _cD(_initDraw(g)); }
+function _R(t,S){ return Math.pow(1+FSRS_FACTOR*t/S,FSRS_DECAY); }
+function nextIvl(S){ let i=Math.round((S/FSRS_FACTOR)*(Math.pow(DESIRED_RETENTION,1/FSRS_DECAY)-1)); return Math.min(Math.max(i,1),MAX_IVL); }
+function _nextD(D,g){ const ld=(dl,d)=>(10-d)*dl/9, mr=(a,b)=>FSRS_W[7]*a+(1-FSRS_W[7])*b;
+  return _cD(mr(_initDraw(4), D+ld(-(FSRS_W[6]*(g-3)),D))); }
+function _forgetS(D,S,r){ const lt=FSRS_W[11]*Math.pow(D,-FSRS_W[12])*(Math.pow(S+1,FSRS_W[13])-1)*Math.exp((1-r)*FSRS_W[14]);
+  const st=S/Math.exp(FSRS_W[17]*FSRS_W[18]); return Math.min(lt,st); }
+function _recallS(D,S,r,g){ const h=g===2?FSRS_W[15]:1, e=g===4?FSRS_W[16]:1;
+  return S*(1+Math.exp(FSRS_W[8])*(11-D)*Math.pow(S,-FSRS_W[9])*(Math.exp((1-r)*FSRS_W[10])-1)*h*e); }
+function _nextS(D,S,r,g){ return _cS(g===1?_forgetS(D,S,r):_recallS(D,S,r,g)); }
+function fsrsReview(s,g,now){
+  if(s.S==null) return {S:initS(g),D:initD(g)};
+  const elapsed=Math.max(0,(now-(s.last??now))/DAY);
+  const r=_R(elapsed,s.S);
+  return {S:_nextS(s.D,s.S,r,g), D:_nextD(s.D,g)};
+}
+function fsrsNext(s,grade,now){ const m=fsrsReview(s,GMAP[grade],now); const ivl=nextIvl(m.S);
+  return {S:m.S,D:m.D,last:now,due:now+ivl*DAY}; }
+function previewDays(s,grade,now){ const m=fsrsReview(s,GMAP[grade],now); return nextIvl(m.S); }
+function humanInterval(s,grade){
+  const d=previewDays(s,grade,Date.now());
+  if(d===1) return '1일'; if(d<30) return d+'일';
+  if(d<365) return Math.round(d/30)+'개월'; return (d/365).toFixed(1)+'년';
+}
+
+/* ---------- due ---------- */
+function dueItems(deckId){
+  const now=Date.now(); const items=[];
+  state.cards.forEach(c=>{
+    if(deckId&&c.deckId!==deckId) return;
+    const d=deckById(c.deckId); if(!d) return;
+    if((c.sched.fwd?.due??0)<=now) items.push({card:c,dir:'fwd'});
+    if(d.type==='translation'&&d.reverse&&c.sched.rev&&(c.sched.rev.due??0)<=now) items.push({card:c,dir:'rev'});
+  });
+  return items;
+}
+function nearestDue(c){
+  const d=deckById(c.deckId); const arr=[c.sched.fwd?.due??Infinity];
+  if(d&&d.type==='translation'&&d.reverse&&c.sched.rev) arr.push(c.sched.rev.due);
+  return Math.min(...arr);
+}
+function refreshDue(){ document.getElementById('dueCount').textContent=dueItems().length; }
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ---------- nav ---------- */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
+    document.getElementById('view-'+b.dataset.view).classList.add('show');
+    if(b.dataset.view==='review') renderReviewHome();
+    if(b.dataset.view==='add') fillDeckSelect();
+    if(b.dataset.view==='browse') renderBrowse();
+    if(b.dataset.view==='decks') renderDecks();
+    if(b.dataset.view==='backup') renderBackup();
+  };
+});
+
+/* ---------- REVIEW ---------- */
+function renderReviewHome(){
+  refreshDue();
+  const area=document.getElementById('reviewArea');
+  if(state.cards.length===0){ area.innerHTML=`<div class="empty"><div class="em">✦</div><div class="big">아직 카드가 없어요</div><div>'카드 추가'에서 첫 카드를 만들어 보세요.</div></div>`; return; }
+  const total=dueItems().length;
+  if(total===0){ area.innerHTML=`<div class="empty"><div class="em">☕</div><div class="big">오늘 복습 끝!</div><div>예정된 카드를 모두 끝냈어요.</div></div>`; return; }
+  const chips=state.decks.map(d=>{ const n=dueItems(d.id).length; if(!n) return '';
+    return `<div class="chip" data-deck="${d.id}">${escapeHtml(d.name)} <b>${n}</b><span class="ty">${d.type==='translation'?'번역':''}</span></div>`; }).join('');
+  area.innerHTML=`<div class="section-title">무엇을 복습할까요? <span>${total}개 대기 중</span></div>
+    <div class="deckchoice"><div class="chip" data-deck="ALL" style="border-color:var(--clay)">전체 복습 <b>${total}</b></div>${chips}</div>`;
+  area.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>startSession(ch.dataset.deck==='ALL'?null:ch.dataset.deck));
+}
+function startSession(deckId){ session.deckId=deckId; session.queue=shuffle(dueItems(deckId)); nextItem(); }
+function nextItem(){
+  if(session.queue.length===0){ session.queue=shuffle(dueItems(session.deckId).filter(it=>{
+    const s=it.card.sched[it.dir]; return s&&s.due<=Date.now(); })); }
+  session.current=session.queue.shift()||null;
+  session.phase='prompt'; session.answer=''; session.verdict=null; session.feedback='';
+  if(!session.current){ renderReviewHome(); refreshDue(); return; }
+  renderItem();
+}
+function dirParts(card,dir){
+  const d=deckById(card.deckId);
+  if(dir==='rev') return {prompt:card.back,answer:card.front,pLabel:d.sideB,aLabel:d.sideA,deck:d};
+  return {prompt:card.front,answer:card.back,pLabel:d.sideA,aLabel:d.sideB,deck:d};
+}
+function renderItem(){
+  const it=session.current, {card,dir}=it, p=dirParts(card,dir), d=p.deck;
+  const area=document.getElementById('reviewArea');
+  const remaining=dueItems(session.deckId).length;
+  const isTrans=d.type==='translation';
+  const dirTxt=isTrans?`${p.pLabel} → ${p.aLabel}`:'';
+  let inner=`<div class="flashcard"><div class="meta">${escapeHtml(d.name)} · 남은 ${remaining}</div>`;
+  if(dirTxt) inner+=`<div class="dirlbl">${escapeHtml(dirTxt)}</div>`;
+  inner+=`<div class="ctext">${richHtml(p.prompt)}</div><div id="slot"></div></div><div id="action"></div>`;
+  area.innerHTML=inner;
+  if(session.phase==='prompt'){
+    if(isTrans) renderPromptTrans(p); else renderPromptBasic();
+  }else{
+    renderRevealed(p);
+  }
+}
+function renderPromptBasic(){
+  document.getElementById('action').innerHTML=`<button class="btn btn-ghost reveal-btn" id="revealBtn">정답 보기 (Space)</button>`;
+  document.getElementById('revealBtn').onclick=()=>{ session.phase='revealed'; renderItem(); };
+}
+function renderPromptTrans(p){
+  document.getElementById('action').innerHTML=`
+    <div class="ans-label" style="margin-top:16px">${escapeHtml(p.aLabel)}로 번역해서 입력</div>
+    <textarea id="ansInput" placeholder="여기에 답을 입력 (⌘/Ctrl + Enter 제출)"></textarea>
+    <button class="btn btn-primary submit-btn" id="submitBtn">제출</button>
+    <span class="skip" id="skipBtn">모르겠어요 — 정답 보기</span>`;
+  const ta=document.getElementById('ansInput'); ta.focus();
+  ta.addEventListener('keydown',e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') submitTrans(); });
+  document.getElementById('submitBtn').onclick=submitTrans;
+  document.getElementById('skipBtn').onclick=()=>{ session.answer=ta.value.trim(); session.verdict=null; session.feedback=''; session.phase='revealed'; renderItem(); };
+}
+async function submitTrans(){
+  const ta=document.getElementById('ansInput'); session.answer=(ta?ta.value:'').trim();
+  if(!session.answer){ toast('답을 입력해 주세요'); return; }
+  const p=dirParts(session.current.card,session.current.dir);
+  if(useClaude){
+    document.getElementById('action').innerHTML=`<div class="checking">AI가 뜻으로 채점 중…</div>`;
+    const res=await judgeTranslation(p,session.answer);
+    if(res){ session.verdict=res.verdict; session.feedback=res.feedback; }
+  }
+  session.phase='revealed'; renderItem();
+}
+async function judgeTranslation(p,userAnswer){
+  const instr=`당신은 번역 채점관입니다. 학습자가 "${p.pLabel}" 문장을 "${p.aLabel}"(으)로 번역한 답을 채점하세요. 의역과 직역을 모두 인정하며, 표현이 달라도 핵심 의미가 충분히 전달되면 정답입니다. 다음 셋 중 하나로 판정하세요. correct=의미가 정확히 전달됨(100%), vague=의미가 일부만 전달되거나 작은 오류가 있음(50%), wrong=의미가 전달되지 않음(0%). 반드시 아래 JSON 한 줄만 출력하고 다른 말, 코드블록, 마크다운은 절대 쓰지 마세요.\n{"verdict":"correct|vague|wrong","feedback":"한국어로 1~2문장 피드백"}`;
+  const content=`${instr}\n\n원문(${p.pLabel}): ${p.prompt}\n모범답안(${p.aLabel}): ${p.answer}\n학습자 답(${p.aLabel}): ${userAnswer}`;
+  try{
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content}]})});
+    const data=await r.json();
+    let text=(data.content||[]).map(b=>b.type==='text'?b.text:'').join('\n').replace(/```json/gi,'').replace(/```/g,'').trim();
+    const o=JSON.parse(text);
+    if(['correct','vague','wrong'].includes(o.verdict)) return {verdict:o.verdict,feedback:o.feedback||''};
+  }catch(e){ console.error('judge fail',e); }
+  return null;
+}
+function renderRevealed(p){
+  const d=p.deck, isTrans=d.type==='translation', card=session.current.card;
+  let html='';
+  if(isTrans){
+    html+=`<hr><div class="ans-label">내 답</div><div class="myans">${escapeHtml(session.answer||'(입력 안 함)')}</div>`;
+    html+=`<div class="ans-label">모범답안 (${escapeHtml(p.aLabel)})</div><div class="ctext" style="text-align:left;font-size:22px">${richHtml(p.answer)}</div>`;
+  }else{
+    html+=`<hr><div class="ctext">${richHtml(p.answer)}</div>`;
+  }
+  const hasMemo=rtText(card.memo);
+  if(hasMemo) html+=`<button class="memo-toggle" id="memoToggle">해설 보기 ▾</button><div class="memo-box" id="memoBox" style="display:none">${richHtml(card.memo)}</div>`;
+  if(session.verdict){ const vk={correct:'정답 · 100%',vague:'애매 · 50%',wrong:'틀림 · 0%'};
+    html+=`<div class="feedback v-${session.verdict}"><span class="v">AI 판정 — ${vk[session.verdict]}</span>${escapeHtml(session.feedback||'')}</div>`; }
+  document.getElementById('slot').innerHTML=html;
+  if(hasMemo){ const mt=document.getElementById('memoToggle'); mt.onclick=()=>{ const box=document.getElementById('memoBox'); const open=box.style.display!=='none'; box.style.display=open?'none':'block'; mt.textContent=open?'해설 보기 ▾':'해설 닫기 ▴'; }; }
+  showGrades();
+}
+function showGrades(){
+  const s=session.current.card.sched[session.current.dir];
+  const grades=[['wrong','틀림'],['vague','애매'],['correct','정답']];
+  const html=`<div class="grade-row">`+grades.map(([k,name])=>
+    `<div class="grade ${k} ${session.verdict===k?'sel':''}" data-g="${k}"><div class="g-name">${name}</div><span class="g-int">${humanInterval(s,k)}</span></div>`).join('')+`</div>`;
+  document.getElementById('action').innerHTML=html;
+  document.querySelectorAll('.grade').forEach(g=>g.onclick=()=>gradeCard(g.dataset.g));
+}
+async function gradeCard(grade){
+  const {card,dir}=session.current;
+  card.sched[dir]=fsrsNext(card.sched[dir],grade,Date.now());
+  if(grade==='wrong') session.queue.push({card,dir});
+  await save(); refreshDue(); nextItem();
+}
+
+/* ---------- ADD (rich text + edit mode) ---------- */
+let editingCard=null, lastRt=null;
+function fillDeckSelect(){
+  const sel=document.getElementById('addDeck');
+  sel.innerHTML=state.decks.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}${d.type==='translation'?' (번역)':''}</option>`).join('');
+  updateAddLabels();
+}
+function updateAddLabels(){
+  const d=deckById(document.getElementById('addDeck').value); if(!d) return;
+  document.getElementById('lblFront').textContent=d.sideA;
+  document.getElementById('lblBack').textContent=d.sideB;
+  document.getElementById('memoRow').style.display='block';
+}
+document.getElementById('addDeck').onchange=updateAddLabels;
+function clearAddFields(){ ['addFront','addBack','addMemo'].forEach(id=>document.getElementById(id).innerHTML=''); }
+function resetAddForm(){ clearAddFields(); editingCard=null; document.getElementById('addSave').textContent='카드 저장 (⌘/Ctrl + Enter)'; document.getElementById('addNew').style.display='none'; }
+async function saveCard(){
+  const d=deckById(document.getElementById('addDeck').value); if(!d){ toast('덱을 먼저 만들어 주세요'); return; }
+  const front=sanitizeHtml(document.getElementById('addFront').innerHTML.trim());
+  const back=sanitizeHtml(document.getElementById('addBack').innerHTML.trim());
+  const memoRaw=document.getElementById('addMemo').innerHTML.trim();
+  const memo=rtText(memoRaw)?sanitizeHtml(memoRaw):'';
+  if(!rtText(front)||!rtText(back)){ toast('양쪽 내용을 모두 입력해 주세요'); return; }
+  if(editingCard){
+    const c=state.cards.find(x=>x.id===editingCard);
+    if(c){ c.deckId=d.id; c.front=front; c.back=back; c.memo=memo;
+      if(d.type==='translation'&&d.reverse&&!c.sched.rev) c.sched.rev=blankSched(); }
+    await save(); resetAddForm(); refreshDue(); toast('카드를 수정했어요 ✦');
+  }else{
+    const sched={fwd:blankSched(),rev:(d.type==='translation'&&d.reverse)?blankSched():null};
+    state.cards.push({id:uid(),deckId:d.id,front,back,memo,createdAt:Date.now(),sched});
+    await save(); clearAddFields(); document.getElementById('addFront').focus(); refreshDue(); toast('카드를 추가했어요 ✦');
+  }
+}
+document.getElementById('addSave').onclick=saveCard;
+document.getElementById('addNew').onclick=resetAddForm;
+['addFront','addBack','addMemo'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('focus',()=>lastRt=el);
+  el.addEventListener('keydown',e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') saveCard(); });
+});
+let savedRange=null;
+document.addEventListener('selectionchange',()=>{
+  const sel=window.getSelection(); if(!sel.rangeCount) return;
+  const r=sel.getRangeAt(0); let n=r.commonAncestorContainer; n=n.nodeType===1?n:n.parentElement;
+  if(n&&n.closest&&n.closest('.rt')){ savedRange=r.cloneRange(); lastRt=n.closest('.rt'); }
+});
+function restoreSel(){ if(savedRange&&lastRt){ lastRt.focus(); const s=window.getSelection(); s.removeAllRanges(); s.addRange(savedRange); return true; } return false; }
+document.getElementById('rtToolbar').addEventListener('mousedown',e=>{
+  const t=e.target.closest('[data-cmd],[data-color]'); if(!t) return;
+  e.preventDefault();                       // 선택 영역 유지
+  if(lastRt) lastRt.focus();
+  try{ document.execCommand('styleWithCSS',false,true); }catch(_){}
+  if(t.dataset.cmd==='bold') document.execCommand('bold');
+  else if(t.dataset.color) document.execCommand('foreColor',false,t.dataset.color);
+});
+(function(){ const sel=document.getElementById('rtSize');
+  let opts='<option value="" disabled selected>pt</option>';
+  for(let i=3;i<=26;i++) opts+=`<option value="${i}">${i}pt</option>`;
+  sel.innerHTML=opts;
+  sel.onchange=function(){ if(!this.value) return; applyFontSize(this.value+'pt'); this.selectedIndex=0; };
+})();
+function applyFontSize(size){
+  if(!restoreSel()) return;
+  const selW=window.getSelection();
+  if(!selW.rangeCount||selW.isCollapsed) return;
+  const range=selW.getRangeAt(0);
+  let anc=range.commonAncestorContainer; anc=anc.nodeType===1?anc:anc.parentElement;
+  if(!anc||!anc.closest||!anc.closest('.rt')) return;
+  try{
+    const frag=range.extractContents();
+    frag.querySelectorAll('[style]').forEach(el=>{ el.style.fontSize=''; if(!el.getAttribute('style')) el.removeAttribute('style'); });
+    frag.querySelectorAll('font[size]').forEach(el=>el.removeAttribute('size'));
+    const span=document.createElement('span'); span.style.fontSize=size; span.appendChild(frag);
+    range.insertNode(span);
+    const nr=document.createRange(); nr.selectNodeContents(span);
+    selW.removeAllRanges(); selW.addRange(nr); savedRange=nr.cloneRange();
+  }catch(e){ console.error('size fail',e); }
+}
+
+/* ---------- BROWSE ---------- */
+function renderBrowse(){
+  const filter=document.getElementById('browseFilter'); const cur=filter.value;
+  filter.innerHTML=`<option value="ALL">모든 덱</option>`+state.decks.map(d=>`<option value="${d.id}">${escapeHtml(d.name)}</option>`).join('');
+  filter.value=[...filter.options].some(o=>o.value===cur)?cur:'ALL';
+  if(!filter._b){ filter.onchange=renderBrowse; filter._b=1; }
+  const f=filter.value;
+  const list=state.cards.filter(c=>f==='ALL'||c.deckId===f);
+  document.getElementById('browseCount').textContent=`(${list.length}장)`;
+  const box=document.getElementById('browseList');
+  if(!list.length){ box.innerHTML=`<div class="empty"><div>이 덱에는 카드가 없어요.</div></div>`; return; }
+  box.innerHTML=list.slice().reverse().map(c=>{
+    const nd=nearestDue(c); const due=nd<=Date.now()?'복습 대기':`${Math.ceil((nd-Date.now())/DAY)}일 후`;
+    const isTr=deckById(c.deckId)?.type==='translation';
+    return `<div class="item"><div class="body"><div class="t">${escapeHtml(rtText(c.front))}</div>
+      <div class="s">${escapeHtml(rtText(c.back))} · ${escapeHtml(deckName(c.deckId))}</div></div>
+      <span class="badge ${isTr?'tr':''}">${isTr?'양방향 · ':''}${due}</span>
+      <button class="icon-btn" data-edit="${c.id}">✎</button><button class="icon-btn" data-del="${c.id}">✕</button></div>`;
+  }).join('');
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delCard(b.dataset.del));
+  box.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editCard(b.dataset.edit));
+}
+async function delCard(id){ state.cards=state.cards.filter(c=>c.id!==id); await save(); renderBrowse(); refreshDue(); toast('카드를 삭제했어요'); }
+function editCard(id){
+  const c=state.cards.find(x=>x.id===id); if(!c) return;
+  document.querySelector('nav button[data-view="add"]').click();
+  document.getElementById('addDeck').value=c.deckId; updateAddLabels();
+  document.getElementById('addFront').innerHTML=c.front||'';
+  document.getElementById('addBack').innerHTML=c.back||'';
+  document.getElementById('addMemo').innerHTML=c.memo||'';
+  editingCard=c.id;
+  document.getElementById('addSave').textContent='수정 저장';
+  document.getElementById('addNew').style.display='inline-block';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- DECKS ---------- */
+let editingDeck=null;
+function dfToggleTrans(){ document.getElementById('revRow').style.display=document.getElementById('dfType').value==='translation'?'block':'none'; }
+document.getElementById('dfType').onchange=dfToggleTrans;
+function resetDeckForm(){
+  editingDeck=null;
+  document.getElementById('deckFormTitle').textContent='새 덱 만들기';
+  document.getElementById('dfName').value=''; document.getElementById('dfType').value='basic';
+  document.getElementById('dfReverse').checked=true;
+  document.getElementById('dfSave').textContent='덱 저장'; document.getElementById('dfReset').style.display='none';
+  dfToggleTrans();
+}
+function loadDeckForm(d){
+  editingDeck=d.id;
+  document.getElementById('deckFormTitle').textContent='덱 편집';
+  document.getElementById('dfName').value=d.name; document.getElementById('dfType').value=d.type;
+  document.getElementById('dfReverse').checked=d.reverse!==false;
+  document.getElementById('dfSave').textContent='변경 저장'; document.getElementById('dfReset').style.display='inline-block';
+  dfToggleTrans(); window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('dfReset').onclick=resetDeckForm;
+document.getElementById('dfSave').onclick=async()=>{
+  const name=document.getElementById('dfName').value.trim(); if(!name){ toast('덱 이름을 입력해 주세요'); return; }
+  const type=document.getElementById('dfType').value;
+  const reverse=type==='translation'?document.getElementById('dfReverse').checked:false;
+  const props={name,type,reverse,
+    sideA:type==='translation'?'일본어':'앞면', sideB:type==='translation'?'한국어':'뒷면', showMemo:true};
+  if(editingDeck){
+    const d=deckById(editingDeck);
+    if(d.type==='translation'&&d.sideA&&d.sideA!=='앞면'){ props.sideA=d.sideA; props.sideB=d.sideB; }  // 기존 언어 라벨 유지
+    Object.assign(d,props);
+    if(type==='translation'&&reverse) state.cards.forEach(c=>{ if(c.deckId===d.id&&!c.sched.rev) c.sched.rev=blankSched(); });
+    toast('덱을 수정했어요');
+  }else{ state.decks.push({id:uid(),...props,createdAt:Date.now()}); toast('덱을 추가했어요 ✦'); }
+  await save(); resetDeckForm(); renderDecks(); refreshDue();
+};
+function renderDecks(){
+  const box=document.getElementById('deckList');
+  box.innerHTML=state.decks.map(d=>{
+    const total=state.cards.filter(c=>c.deckId===d.id).length; const due=dueItems(d.id).length;
+    const tags=[d.type==='translation'?`번역 ${d.sideA}↔${d.sideB}`:'기본'];
+    if(d.type==='translation') tags.push(d.reverse?'리버스':'단방향');
+    return `<div class="item"><div class="body"><div class="t">${escapeHtml(d.name)}</div>
+      <div class="s">${escapeHtml(tags.join(' · '))} · 전체 ${total} · 대기 ${due}</div></div>
+      <button class="icon-btn" data-edit="${d.id}">✎</button><button class="icon-btn" data-del="${d.id}">✕</button></div>`;
+  }).join('');
+  box.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>loadDeckForm(deckById(b.dataset.edit)));
+  box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delDeck(b.dataset.del));
+}
+async function delDeck(id){
+  const cnt=state.cards.filter(c=>c.deckId===id).length;
+  if(!confirm(`이 덱과 카드 ${cnt}장을 모두 삭제할까요?`)) return;
+  state.decks=state.decks.filter(d=>d.id!==id); state.cards=state.cards.filter(c=>c.deckId!==id);
+  if(!state.decks.length) state.decks.push(newDeck('기본 덱'));
+  if(editingDeck===id) resetDeckForm();
+  await save(); renderDecks(); refreshDue(); toast('덱을 삭제했어요');
+}
+
+/* ---------- BACKUP ---------- */
+function makeBackupJSON(){ return JSON.stringify({app:'srs-review',version:2,exportedAt:new Date().toISOString(),decks:state.decks,cards:state.cards},null,2); }
+function renderBackup(){
+  document.getElementById('bkStats').textContent=`덱 ${state.decks.length}개 · 카드 ${state.cards.length}장`;
+  document.getElementById('exportText').value=makeBackupJSON();
+  document.getElementById('importText').value=''; document.getElementById('importMsg').textContent='';
+}
+function downloadBackup(){
+  try{ const blob=new Blob([makeBackupJSON()],{type:'application/json'}); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='복습-백업-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000); toast('백업 파일을 저장했어요 ✦');
+  }catch(e){ toast('다운로드가 막혔어요 — 위 텍스트를 복사해 두세요'); }
+}
+async function copyBackup(){
+  const ta=document.getElementById('exportText'); ta.focus(); ta.select();
+  try{ await navigator.clipboard.writeText(ta.value); toast('복사했어요 ✦'); }
+  catch(e){ try{ document.execCommand('copy'); toast('복사했어요 ✦'); }catch(_){ toast('직접 선택해 복사해 주세요'); } }
+}
+async function importBackup(mode){
+  const msg=document.getElementById('importMsg'); const raw=document.getElementById('importText').value.trim();
+  if(!raw){ msg.style.color='var(--clay)'; msg.textContent='가져올 내용을 먼저 붙여넣어 주세요.'; return; }
+  let data; try{ data=JSON.parse(raw); }catch(e){ msg.style.color='var(--clay)'; msg.textContent='올바른 백업 형식이 아니에요.'; return; }
+  if(!data||!Array.isArray(data.decks)||!Array.isArray(data.cards)){ msg.style.color='var(--clay)'; msg.textContent='덱/카드 정보를 찾을 수 없어요.'; return; }
+  if(mode==='replace'){ if(!confirm('지금 데이터를 모두 지우고 이 백업으로 교체할까요?')) return; state.decks=data.decks; state.cards=data.cards; }
+  else{
+    const dM=new Map(state.decks.map(d=>[d.id,d])); data.decks.forEach(d=>{ if(d&&d.id) dM.set(d.id,d); }); state.decks=[...dM.values()];
+    const cM=new Map(state.cards.map(c=>[c.id,c])); data.cards.forEach(c=>{ if(c&&c.id) cM.set(c.id,c); }); state.cards=[...cM.values()];
+  }
+  normalize(); if(!state.decks.length) state.decks.push(newDeck('기본 덱'));
+  await save(); refreshDue(); renderBackup();
+  msg.style.color='var(--moss)'; msg.textContent=`완료! 덱 ${state.decks.length}개 · 카드 ${state.cards.length}장`; toast('가져오기 완료 ✦');
+}
+function handleBackupFile(input){ const f=input.files&&input.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=e=>{ document.getElementById('importText').value=e.target.result; toast('파일을 불러왔어요'); }; r.readAsText(f); input.value=''; }
+document.getElementById('bkCopy').onclick=copyBackup;
+document.getElementById('bkDownload').onclick=downloadBackup;
+document.getElementById('bkMerge').onclick=()=>importBackup('merge');
+document.getElementById('bkReplace').onclick=()=>importBackup('replace');
+document.getElementById('bkFile').onchange=function(){ handleBackupFile(this); };
+
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('view-review').classList.contains('show')||!session.current) return;
+  if(session.phase==='prompt'){
+    const d=deckById(session.current.card.deckId);
+    if(d.type!=='translation'&&e.key===' '){ e.preventDefault(); session.phase='revealed'; renderItem(); }
+    return;
+  }
+  const map={'1':'wrong','2':'vague','3':'correct'};
+  if(map[e.key]) gradeCard(map[e.key]);
+});
+
+/* ---------- util ---------- */
+function rtText(html){ const d=document.createElement('div'); d.innerHTML=html||''; return (d.textContent||'').trim(); }
+const RT_TAGS={B:1,STRONG:1,I:1,EM:1,U:1,SPAN:1,FONT:1,BR:1,DIV:1,P:1};
+const RT_STYLE=['color','font-weight','font-size','text-decoration','font-style'];
+function cleanStyle(s){ return (s||'').split(';').map(x=>x.trim()).filter(x=>RT_STYLE.includes((x.split(':')[0]||'').trim().toLowerCase())).join('; '); }
+function sanitizeHtml(html){
+  const root=document.createElement('div'); root.innerHTML=html||'';
+  (function walk(node){
+    [...node.childNodes].forEach(ch=>{
+      if(ch.nodeType===1){
+        if(!RT_TAGS[ch.tagName]){ node.replaceChild(document.createTextNode(ch.textContent),ch); return; }
+        [...ch.attributes].forEach(a=>{
+          if(a.name==='style') ch.setAttribute('style',cleanStyle(a.value));
+          else if(ch.tagName==='FONT'&&(a.name==='color'||a.name==='size')){}
+          else ch.removeAttribute(a.name);
+        });
+        walk(ch);
+      }else if(ch.nodeType!==3){ ch.remove(); }
+    });
+  })(root);
+  return root.innerHTML;
+}
+const richHtml=h=>sanitizeHtml(h);
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/* ---------- init ---------- */
+(async()=>{ await load(); refreshDue(); renderReviewHome(); fillDeckSelect(); resetDeckForm(); })();
+</script>
+</body>
+</html>
