@@ -55,6 +55,11 @@
   #reviewArea{min-height:340px;display:flex;flex-direction:column}
   .deckchoice{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
   .deckchoice .chip{font-family:'Space Mono',monospace;font-size:12px;border:1.5px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer;background:var(--paper-2);transition:.15s;display:flex;gap:8px;align-items:center}
+  .chip .shuf{display:inline-flex;align-items:center;color:var(--ink-soft);cursor:pointer;padding:2px;border-radius:5px;transition:.14s}
+  .chip .shuf:hover{color:var(--clay);background:var(--paper)}
+  .icon-btn svg{display:block}
+  .shuf-btn{color:var(--ink-soft)}
+  .shuf-btn:hover{color:var(--clay)}
   .deckchoice .chip:hover{border-color:var(--clay)}
   .deckchoice .chip b{color:var(--clay)}
   .deckchoice .chip .ty{font-size:9px;opacity:.6}
@@ -212,7 +217,8 @@
 const STORE_KEY='srs-data-v2';
 const DAY=24*60*60*1000;
 let state={decks:[],cards:[]};
-let session={deckId:null,queue:[],current:null,phase:'prompt',answer:'',verdict:null,feedback:''};
+let session={deckId:null,queue:[],current:null,phase:'prompt',answer:'',verdict:null,feedback:'',mode:'due'};
+const SHUF_SVG='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>';
 
 const useClaude = typeof window!=='undefined' && window.storage && typeof window.storage.get==='function';
 
@@ -342,14 +348,29 @@ function renderReviewHome(){
   const total=dueItems().length;
   if(total===0){ area.innerHTML=`<div class="empty"><div class="em">☕</div><div class="big">오늘 복습 끝!</div><div>예정된 카드를 모두 끝냈어요.</div></div>`; return; }
   const chips=state.decks.map(d=>{ const n=dueItems(d.id).length; if(!n) return '';
-    return `<div class="chip" data-deck="${d.id}">${escapeHtml(d.name)} <b>${n}</b><span class="ty">${d.type==='translation'?'번역':''}</span></div>`; }).join('');
+    return `<div class="chip" data-deck="${d.id}"><span class="shuf" data-shuf="${d.id}" title="셔플 복습">${SHUF_SVG}</span>${escapeHtml(d.name)} <b>${n}</b><span class="ty">${d.type==='translation'?'번역':''}</span></div>`; }).join('');
   area.innerHTML=`<div class="section-title">무엇을 복습할까요? <span>${total}개 대기 중</span></div>
     <div class="deckchoice"><div class="chip" data-deck="ALL" style="border-color:var(--clay)">전체 복습 <b>${total}</b></div>${chips}</div>`;
   area.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>startSession(ch.dataset.deck==='ALL'?null:ch.dataset.deck));
+  area.querySelectorAll('.shuf').forEach(s=>s.onclick=(e)=>{ e.stopPropagation(); shuffleStudy(s.dataset.shuf); });
 }
-function startSession(deckId){ session.deckId=deckId; session.queue=shuffle(dueItems(deckId)); nextItem(); }
+function startSession(deckId){ session.deckId=deckId; session.mode='due'; session.queue=shuffle(dueItems(deckId)); nextItem(); }
+function shuffleStudy(deckId){
+  const d=deckById(deckId); if(!d) return;
+  const items=[];
+  state.cards.forEach(c=>{ if(c.deckId!==deckId) return;
+    items.push({card:c,dir:'fwd'});
+    if(d.type==='translation'&&d.reverse&&c.sched.rev) items.push({card:c,dir:'rev'}); });
+  if(!items.length){ toast('이 덱엔 카드가 없어요'); return; }
+  session.deckId=deckId; session.mode='shuffle'; session.queue=shuffle(items);
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelector('nav button[data-view="review"]').classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('show'));
+  document.getElementById('view-review').classList.add('show');
+  nextItem(); toast('셔플 복습 시작 — '+d.name);
+}
 function nextItem(){
-  if(session.queue.length===0){ session.queue=shuffle(dueItems(session.deckId).filter(it=>{
+  if(session.queue.length===0 && session.mode==='due'){ session.queue=shuffle(dueItems(session.deckId).filter(it=>{
     const s=it.card.sched[it.dir]; return s&&s.due<=Date.now(); })); }
   session.current=session.queue.shift()||null;
   session.phase='prompt'; session.answer=''; session.verdict=null; session.feedback='';
@@ -622,10 +643,11 @@ function renderDecks(){
     const total=state.cards.filter(c=>c.deckId===d.id).length; const due=dueItems(d.id).length;
     const tags=[d.type==='translation'?`번역 ${d.sideA}↔${d.sideB}`:'기본'];
     if(d.type==='translation') tags.push(d.reverse?'리버스':'단방향');
-    return `<div class="item"><div class="body"><div class="t">${escapeHtml(d.name)}</div>
+    return `<div class="item"><button class="icon-btn shuf-btn" data-shuf="${d.id}" title="셔플 복습">${SHUF_SVG}</button><div class="body"><div class="t">${escapeHtml(d.name)}</div>
       <div class="s">${escapeHtml(tags.join(' · '))} · 전체 ${total} · 대기 ${due}</div></div>
       <button class="icon-btn" data-edit="${d.id}">✎</button><button class="icon-btn" data-del="${d.id}">✕</button></div>`;
   }).join('');
+  box.querySelectorAll('[data-shuf]').forEach(b=>b.onclick=()=>shuffleStudy(b.dataset.shuf));
   box.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>loadDeckForm(deckById(b.dataset.edit)));
   box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>delDeck(b.dataset.del));
 }
