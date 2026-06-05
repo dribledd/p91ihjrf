@@ -95,6 +95,7 @@
   .checking{text-align:center;color:var(--ink-soft);font-family:'Space Mono',monospace;font-size:13px;padding:18px}
 
   .grade-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px}
+  .redo-btn{width:100%;margin-top:10px}
   .grade{border:1.5px solid var(--line);border-radius:11px;padding:13px 6px;cursor:pointer;background:var(--paper-2);transition:.14s;text-align:center}
   .grade:hover{transform:translateY(-2px)}
   .grade .g-name{font-family:'Fraunces',serif;font-size:17px;font-weight:600}
@@ -456,12 +457,16 @@ function renderRevealed(p){
 }
 function showGrades(){
   const s=session.current.card.sched[session.current.dir];
+  const isNew=s.S==null;
   const grades=[['wrong','틀림'],['vague','애매'],['correct','정답']];
-  const html=`<div class="grade-row">`+grades.map(([k,name])=>
+  let html=`<div class="grade-row">`+grades.map(([k,name])=>
     `<div class="grade ${k} ${session.verdict===k?'sel':''}" data-g="${k}"><div class="g-name">${name}</div><span class="g-int">${humanInterval(s,k)}</span></div>`).join('')+`</div>`;
+  if(isNew) html+=`<button class="btn btn-ghost redo-btn" id="redoBtn">↻ 다시하기 (처음 보는 카드 — 한 번 더)</button>`;
   document.getElementById('action').innerHTML=html;
   document.querySelectorAll('.grade').forEach(g=>g.onclick=()=>gradeCard(g.dataset.g));
+  const rb=document.getElementById('redoBtn'); if(rb) rb.onclick=redoCard;
 }
+function redoCard(){ session.phase='prompt'; session.answer=''; session.verdict=null; session.feedback=''; renderItem(); }
 async function gradeCard(grade){
   const {card,dir}=session.current;
   card.sched[dir]=fsrsNext(card.sched[dir],grade,Date.now());
