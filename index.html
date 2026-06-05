@@ -405,20 +405,17 @@ function renderPromptBasic(){
 }
 function renderPromptTrans(p){
   document.getElementById('action').innerHTML=`
-    <div class="ans-label" style="margin-top:16px">${escapeHtml(p.aLabel)}로 번역해서 입력</div>
-    <textarea id="ansInput" placeholder="여기에 답을 입력 (⌘/Ctrl + Enter 제출)"></textarea>
-    <button class="btn btn-primary submit-btn" id="submitBtn">제출</button>
-    <span class="skip" id="skipBtn">모르겠어요 — 정답 보기</span>`;
-  const ta=document.getElementById('ansInput'); ta.focus();
+    <div class="ans-label" style="margin-top:16px">${escapeHtml(p.aLabel)}로 번역해서 입력 (선택)</div>
+    <textarea id="ansInput" placeholder="답 입력 후 ⌘/Ctrl+Enter, 또는 그냥 Space로 정답 보기"></textarea>
+    <button class="btn btn-primary submit-btn" id="submitBtn">제출 (Space)</button>`;
+  const ta=document.getElementById('ansInput');
   ta.addEventListener('keydown',e=>{ if((e.metaKey||e.ctrlKey)&&e.key==='Enter') submitTrans(); });
   document.getElementById('submitBtn').onclick=submitTrans;
-  document.getElementById('skipBtn').onclick=()=>{ session.answer=ta.value.trim(); session.verdict=null; session.feedback=''; session.phase='revealed'; renderItem(); };
 }
 async function submitTrans(){
   const ta=document.getElementById('ansInput'); session.answer=(ta?ta.value:'').trim();
-  if(!session.answer){ toast('답을 입력해 주세요'); return; }
   const p=dirParts(session.current.card,session.current.dir);
-  if(useClaude){
+  if(session.answer && useClaude){
     document.getElementById('action').innerHTML=`<div class="checking">AI가 뜻으로 채점 중…</div>`;
     const res=await judgeTranslation(p,session.answer);
     if(res){ session.verdict=res.verdict; session.feedback=res.feedback; }
@@ -709,12 +706,15 @@ document.getElementById('bkFile').onchange=function(){ handleBackupFile(this); }
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('view-review').classList.contains('show')||!session.current) return;
   if(session.phase==='prompt'){
+    if(e.key!==' '&&e.code!=='Space') return;
+    if(document.activeElement&&document.activeElement.id==='ansInput') return;  // 입력칸 타이핑 중엔 스페이스 그대로
+    e.preventDefault();
     const d=deckById(session.current.card.deckId);
-    if(d.type!=='translation'&&e.key===' '){ e.preventDefault(); session.phase='revealed'; renderItem(); }
+    if(d.type==='translation') submitTrans(); else { session.phase='revealed'; renderItem(); }
     return;
   }
-  const map={'1':'wrong','2':'vague','3':'correct'};
-  if(map[e.key]) gradeCard(map[e.key]);
+  const codeMap={Digit1:'wrong',Numpad1:'wrong',Digit2:'vague',Numpad2:'vague',Digit3:'correct',Numpad3:'correct'};
+  const g=codeMap[e.code]; if(g){ e.preventDefault(); gradeCard(g); }
 });
 
 /* ---------- util ---------- */
