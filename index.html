@@ -521,12 +521,34 @@ document.getElementById('addNew').onclick=resetAddForm;
   });
 });
 function resetToDefaultFont(field){
-  const sel=window.getSelection(); if(!sel) return;
-  if(sel.rangeCount&&!sel.isCollapsed){
-    const r=sel.getRangeAt(0); let a=r.commonAncestorContainer; a=a.nodeType===1?a:a.parentElement;
-    if(a&&a.closest&&a.closest('.rt')){ document.execCommand('insertText',false,sel.toString()); return; }
+  const sel=window.getSelection(); if(!sel||!sel.rangeCount) return;
+  const rtOf=n=>{ n=n&&(n.nodeType===1?n:n.parentElement); return (n&&n.closest)?n.closest('.rt'):null; };
+  // 선택 영역이 있으면 그 부분만 기본값으로 (기존 동작)
+  if(!sel.isCollapsed){
+    if(rtOf(sel.getRangeAt(0).commonAncestorContainer)) document.execCommand('insertText',false,sel.toString());
+    return;
   }
-  if(field){ field.focus(); document.execCommand('selectAll',false,null); document.execCommand('insertText',false,window.getSelection().toString()); }  // 선택 없으면 칸 전체 초기화
+  // 커서만 있을 때: 기존 글자는 그대로, 커서 이후 입력만 기본 글꼴·크기로
+  const range=sel.getRangeAt(0);
+  const rt=field||rtOf(range.startContainer);
+  if(!rt) return;
+  const marker=document.createElement('span');
+  marker.appendChild(document.createTextNode('\u200b'));   // zero-width space (자리 유지)
+  range.insertNode(marker);
+  // 서식 적용된 상위 span들 밖으로 marker를 끌어올려 .rt 직속으로 (그러면 기본 글꼴·크기 상속)
+  let guard=0;
+  while(marker.parentNode && marker.parentNode!==rt && guard++<60){
+    const parent=marker.parentNode;
+    const right=parent.cloneNode(false);
+    let sib=marker.nextSibling;
+    while(sib){ const nx=sib.nextSibling; right.appendChild(sib); sib=nx; }
+    parent.parentNode.insertBefore(marker, parent.nextSibling);
+    if(right.childNodes.length) parent.parentNode.insertBefore(right, marker.nextSibling);
+    if(!parent.childNodes.length) parent.remove();
+  }
+  rt.focus();
+  const nr=document.createRange(); nr.setStart(marker.firstChild,1); nr.collapse(true);
+  sel.removeAllRanges(); sel.addRange(nr);
 }
 let savedRange=null;
 document.addEventListener('selectionchange',()=>{
@@ -718,7 +740,7 @@ document.addEventListener('keydown',e=>{
 });
 
 /* ---------- util ---------- */
-function rtText(html){ const d=document.createElement('div'); d.innerHTML=html||''; return (d.textContent||'').trim(); }
+function rtText(html){ const d=document.createElement('div'); d.innerHTML=html||''; return (d.textContent||'').replace(/\u200b/g,'').trim(); }
 const RT_TAGS={B:1,STRONG:1,I:1,EM:1,U:1,SPAN:1,FONT:1,BR:1,DIV:1,P:1};
 const RT_STYLE=['color','font-weight','font-size','text-decoration','font-style'];
 function cleanStyle(s){ return (s||'').split(';').map(x=>x.trim()).filter(x=>RT_STYLE.includes((x.split(':')[0]||'').trim().toLowerCase())).join('; '); }
